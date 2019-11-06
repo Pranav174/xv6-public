@@ -15,6 +15,7 @@ OBJS = \
 	picirq.o\
 	pipe.o\
 	proc.o\
+	mlfq.o\
 	sleeplock.o\
 	spinlock.o\
 	string.o\
@@ -71,12 +72,25 @@ QEMU = $(shell if which qemu > /dev/null; \
 	echo "***" 1>&2; exit 1)
 endif
 
+SCHEDULER=RR
+# ifeq ($(SCHEDULER),RR)
+# 	SCHEDULER=0
+# endif
+# ifeq ($(SCHEDULER),FCFS)
+# 	SCHEDULER=1
+# endif
+# ifeq ($(SCHEDULER),PBS)
+# 	SCHEDULER=2
+# endif
+# ifeq ($(SCHEDULER),MLFQ)
+# 	SCHEDULER=3
+# endif
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -D SCHEDULER_ALGO=$(SCHEDULER)
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -121,7 +135,7 @@ initcode: initcode.S
 	$(OBJDUMP) -S initcode.o > initcode.asm
 
 kernel: $(OBJS) entry.o entryother initcode kernel.ld
-	$(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) -b binary initcode entryother
+	$(LD) $(LDFLAGS) -T kernel.ld  -o kernel entry.o $(OBJS) -b binary initcode entryother
 	$(OBJDUMP) -S kernel > kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
 
@@ -180,6 +194,11 @@ UPROGS=\
 	_stressfs\
 	_usertests\
 	_wc\
+	_bench\
+	_tm\
+	_lp\
+	_ps\
+	_time\
 	_zombie\
 
 fs.img: mkfs README $(UPROGS)
@@ -249,7 +268,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
-	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
+	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c tm.c wc.c bench.c ps.c time.c lp.c zombie.c\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\

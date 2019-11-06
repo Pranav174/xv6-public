@@ -27,6 +27,41 @@ sys_wait(void)
 }
 
 int
+sys_waitx(void)
+{
+  int *wtime, *rtime;
+  if(argptr(0, (char**)&wtime, sizeof(int)) < 0)
+    return -1;
+  if(argptr(1, (char**)&rtime, sizeof(int)) < 0)
+    return -1;
+  return waitx(wtime, rtime);
+}
+
+int
+sys_getpinfo(void)
+{
+  struct proc_stat *p;
+  if(argptr(0, (char**)&p, sizeof(int)) < 0)
+    return -1;
+  return getpinfo(p);
+}
+
+int
+sys_cps(void)
+{
+  return cps();
+}
+
+int
+sys_set_priority(void)
+{
+  int priorty;
+  if(argint(0, &priorty) < 0)
+    return -1;
+  return set_priority(priorty);
+}
+
+int
 sys_kill(void)
 {
   int pid;

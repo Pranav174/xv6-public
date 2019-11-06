@@ -1,3 +1,5 @@
+int scheduler_type;
+int premetive;
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -34,6 +36,7 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+
 // Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
@@ -49,6 +52,14 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  int ctime;                   // Creation Time
+  int etime;                   // End Time
+  int rtime;                   // Running time
+  int ltime;                   // last execution time
+  int num_run;                 // number of times executed
+  int priority;                // priority in pbs, cur_queue in mlfq
+  int ticks[5];                // ticks in each queue
+  int session;              // ticks in each queue
 };
 
 // Process memory is laid out contiguously, low addresses first:
