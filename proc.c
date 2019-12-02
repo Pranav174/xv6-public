@@ -8,6 +8,8 @@
 #include "spinlock.h"
 #include "mlfq.h"
 
+int time_slice[5] = {1,2,4,8,16};
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -103,6 +105,8 @@ found:
   p->rtime = 0;
   p->num_run = 0;
   p->priority = 0;
+  for (int i=0; i<5; i++)
+    p->ticks[i]=0;
   if(scheduler_type==2)
     p->priority=60;
   // cprintf("New process %s started at %d\n", p->name, p->ctime);
@@ -166,10 +170,8 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
-  // cprintf("1 here %d\n", lol);
   if(scheduler_type==3){
     add_to_mlfq(p);
-    // cprintf("1 here %d\n", lol++);
   }
 
   release(&ptable.lock);
@@ -237,10 +239,8 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
-  // cprintf("2 here %d\n", lol);
   if(scheduler_type==3){
     add_to_mlfq(np);
-    // cprintf("2 here %d\n", lol++);
   }
 
   release(&ptable.lock);
@@ -394,6 +394,7 @@ cps(void)
   acquire(&ptable.lock);
   char state[3][20] = {"SLEEPING", "RUNNING", "RUNNABLE"};
   int i=0;
+  cprintf("Current Time: %d\n", ticks);
   cprintf("algo: %d\n", scheduler_type);
   cprintf("name \t pid  \t state \t\t ctime \t rtime \t priority\n");
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -614,19 +615,40 @@ sched(void)
   mycpu()->intena = intena;
 }
 
+void
+call_sched(void)
+{
+  struct proc *p = myproc();
+  p->state = RUNNABLE;
+  if(scheduler_type==3){
+    add_to_mlfq(p);
+  }
+  sched();
+}
+
 // Give up the CPU for one scheduling round.
 void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
-  struct proc *p = myproc();
-  p->state = RUNNABLE;
-  // cprintf("3 here %d\n", lol);
-  if(scheduler_type==3){
-    add_to_mlfq(p);
-    // cprintf("3 here %d\n", lol++);
+  
+  myproc()->rtime++;
+  myproc()->session++;
+  if(scheduler_type==3)
+    myproc()->ticks[myproc()->priority]++;
+  myproc()->ltime=ticks;
+  if(premetive)
+  {
+    if(scheduler_type==3 && (myproc()->session)>=time_slice[myproc()->priority]){
+      // cprintf("Process %s with pid %d yielded after session of %d from priorty %d\n", myproc()->name, myproc()->pid, myproc()->session, myproc()->priority);
+      if(myproc()->priority<=3)
+        myproc()->priority++;
+      call_sched();
+    }
+    if(scheduler_type!=3)
+      call_sched();
   }
-  sched();
+
   release(&ptable.lock);
 }
 
@@ -702,10 +724,8 @@ wakeup1(void *chan)
     if(p->state == SLEEPING && p->chan == chan)
     {
       p->state = RUNNABLE;
-      // cprintf("4 here %d\n", lol);
       if(scheduler_type==3){
         add_to_mlfq(p);
-        // cprintf("4 here %d\n", lol++);
       }
     }
 }
@@ -735,10 +755,8 @@ kill(int pid)
       if(p->state == SLEEPING)
       {
         p->state = RUNNABLE;
-        // cprintf("5 here %d\n", lol);
         if(scheduler_type==3){
           add_to_mlfq(p);
-          // cprintf("5 here %d\n", lol++);
         }
       }
       release(&ptable.lock);

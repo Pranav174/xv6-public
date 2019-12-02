@@ -27,7 +27,6 @@ int main(int argc, char *argv[])
     }
     if (pid == 0)
     {
-      set_priority(100-(20+j));
       volatile int i;
       for (volatile int k = 0; k < number_of_processes; k++)
       {
@@ -47,6 +46,11 @@ int main(int argc, char *argv[])
       printf(1, "%d\n", j);
       exit();
     }
+  }
+  for (int l = 0; l < 25; l++)
+  {
+    cps();
+    sleep(100);
   }
   for (j = 0; j < 20; j++)
   {

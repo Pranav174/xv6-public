@@ -13,7 +13,7 @@ struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
-int time_slice[5] = {1,2,4,8,16};
+
 void
 tvinit(void)
 {
@@ -104,22 +104,7 @@ trap(struct trapframe *tf)
   // If interrupts were on while locks held, would need to check nlock.
   if(myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER)
   {
-    myproc()->rtime++;
-    myproc()->session++;
-    if(scheduler_type==3)
-      myproc()->ticks[myproc()->priority]++;
-    myproc()->ltime=ticks;
-    if(premetive)
-    {
-      if(scheduler_type==3 && (myproc()->session)>=time_slice[myproc()->priority]){
-        // cprintf("Process %s with pid %d yielded after session of %d from priorty %d\n", myproc()->name, myproc()->pid, myproc()->session, myproc()->priority);
-        if(myproc()->priority<=3)
-          myproc()->priority++;
-        yield();
-      }
-      if(scheduler_type!=3)
-        yield();
-    }
+    yield();
   }
 
   // Check if the process has been killed since we yielded
