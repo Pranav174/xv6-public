@@ -73,18 +73,6 @@ QEMU = $(shell if which qemu > /dev/null; \
 endif
 
 SCHEDULER=RR
-# ifeq ($(SCHEDULER),RR)
-# 	SCHEDULER=0
-# endif
-# ifeq ($(SCHEDULER),FCFS)
-# 	SCHEDULER=1
-# endif
-# ifeq ($(SCHEDULER),PBS)
-# 	SCHEDULER=2
-# endif
-# ifeq ($(SCHEDULER),MLFQ)
-# 	SCHEDULER=3
-# endif
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
@@ -135,7 +123,7 @@ initcode: initcode.S
 	$(OBJDUMP) -S initcode.o > initcode.asm
 
 kernel: $(OBJS) entry.o entryother initcode kernel.ld
-	$(LD) $(LDFLAGS) -T kernel.ld  -o kernel entry.o $(OBJS) -b binary initcode entryother
+	$(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) -b binary initcode entryother
 	$(OBJDUMP) -S kernel > kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
 

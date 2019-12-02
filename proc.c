@@ -14,7 +14,6 @@ struct {
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
-int lol=0;
 struct proc_stat {
  int pid; // PID of each process
  int runtime; // Use suitable unit of time
